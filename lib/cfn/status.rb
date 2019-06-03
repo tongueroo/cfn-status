@@ -10,7 +10,6 @@ module Cfn
 
     attr_reader :events
     def initialize(stack_name, options={})
-      @stack_name = switch_current(stack_name)
       @options = options
       reset
     end
@@ -37,10 +36,6 @@ module Cfn
         refresh_events
         show_events(true)
       end
-    end
-
-    def switch_current(stack_name)
-      Bolt::Cfn::Current.name!(stack_name)
     end
 
     def reset
