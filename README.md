@@ -1,28 +1,45 @@
-# Cfn::Status
+# Cfn Status
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/cfn/status`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'cfn-status'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install cfn-status
+Helper library provides status of CloudFormation stack.
 
 ## Usage
 
-TODO: Write usage instructions here
+Add this line to your gem's gemspec:
+
+```ruby
+  gem.add_development_dependency "cfn-status"
+```
+
+Require it to your library:
+
+```ruby
+require "cfn-status"
+```
+
+Use like so:
+
+```ruby
+status = Cfn::Status.new(stack_name)
+status.run # prints out stack events
+```
+
+The `status.run` will:
+
+* print out the most recent stack events and return right away if the stack is in a completed state.
+* print out the most recent stack events and poll for more events until the stack in a completed state.
+
+To find out whether the most recent completed state of the stack was a success or a fail, you can use `status.success?`.
+
+```ruby
+status.success?
+```
+
+If you need to just wait for the stack to complete, you can also use `status.wait`.
+
+```ruby
+status.wait
+status.success?
+```
 
 ## Development
 
