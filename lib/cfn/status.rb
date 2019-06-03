@@ -10,6 +10,7 @@ module Cfn
 
     attr_reader :events
     def initialize(stack_name, options={})
+      @stack_name = stack_name
       @options = options
       reset
     end
