@@ -13,7 +13,7 @@ Add this line to your gem's gemspec:
 Require it to your library:
 
 ```ruby
-require "cfn-status"
+require "cfn/status"
 ```
 
 Use like so:
