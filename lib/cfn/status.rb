@@ -19,7 +19,7 @@ module Cfn
     def run
       unless stack_exists?(@stack_name)
         puts "The stack #{@stack_name.color(:green)} does not exist."
-        return
+        return true
       end
 
       resp = cfn.describe_stacks(stack_name: @stack_name)
@@ -37,6 +37,7 @@ module Cfn
         refresh_events
         show_events(true)
       end
+      success?
     end
 
     def reset
@@ -91,10 +92,10 @@ module Cfn
     # Only shows new events
     def show_events(final=false)
       if @last_shown_event_id.nil?
-        i = find_index(:start)
+        i = find_index(:start, final)
         print_events(i)
       else
-        i = find_index(:last_shown)
+        i = find_index(:last_shown, final)
         # puts "last_shown index #{i}"
         print_events(i-1) unless i == 0
       end
@@ -141,18 +142,21 @@ module Cfn
       end
     end
 
-    def find_index(name)
-      send("#{name}_index")
+    def find_index(name, final=false)
+      send("#{name}_index", final)
     end
 
-    def start_index
-      @events.find_index do |event|
+    def start_index(final=false)
+      index = @events.find_index do |event|
         event["resource_type"] == "AWS::CloudFormation::Stack" &&
         event["resource_status_reason"] == "User Initiated"
       end
+      # Instead of paginating until until we find the first "User Initiated" "AWS::CloudFormation::Stack" event
+      # we'll use the max.
+      index ? index : @events.size - 1
     end
 
-    def last_shown_index
+    def last_shown_index(_)
       @events.find_index do |event|
         event["event_id"] == @last_shown_event_id
       end
