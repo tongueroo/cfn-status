@@ -7,14 +7,14 @@ module Cfn
     end
 
     def stack_exists?(stack_name)
-      return true if testing_update?
+      return true if ENV['TEST']
       return false if @options[:noop]
 
       exist = nil
       begin
         # When the stack does not exist an exception is raised. Example:
         # Aws::CloudFormation::Errors::ValidationError: Stack with id blah does not exist
-        resp = cfn.describe_stacks(stack_name: stack_name)
+        cfn.describe_stacks(stack_name: stack_name)
         exist = true
       rescue Aws::CloudFormation::Errors::ValidationError => e
         if e.message =~ /does not exist/
@@ -46,11 +46,6 @@ module Cfn
 
     def rollback_complete?(stack)
       stack.stack_status == 'ROLLBACK_COMPLETE'
-    end
-
-    def testing_update?
-      # TODO: Figure out how to get rid of this
-      ENV['TEST'] #  && self.class.name == "BoltCfn::Update"
     end
   end
 end

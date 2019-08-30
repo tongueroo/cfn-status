@@ -15,7 +15,6 @@ module Cfn
       reset
     end
 
-    # used for the bolt cfn status command
     def run
       unless stack_exists?(@stack_name)
         puts "The stack #{@stack_name.color(:green)} does not exist."
