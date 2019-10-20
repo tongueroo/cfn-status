@@ -32,7 +32,7 @@ class CfnStatus
       puts "Stack events:"
       # show the last events that was user initiated
       refresh_events
-      show_events(true)
+      show_events(final: true)
     end
     success?
   end
@@ -50,14 +50,17 @@ class CfnStatus
 
     refresh_events
     until completed || @stack_deletion_completed
-      show_events
+      show_events(final: false)
     end
-    show_events(true) # show the final event
+    show_events(final: true) # show the final event
 
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
       return
     end
+
+    # Never gets beyond here when deleting a stack because the describe stack returns nothing
+    # once the stack is deleted. Gets here for stack create and update though.
 
     if last_event_status =~ /_FAILED/
       puts "Stack failed: #{last_event_status}".color(:red)
@@ -68,8 +71,6 @@ class CfnStatus
       puts "Stack success status: #{last_event_status}".color(:green)
     end
 
-    # Never gets here when deleting a stack because the describe stack returns nothing
-    # once the stack is deleted. Gets here for stack create and update though.
     return if @hide_time_took # set in run
     took = Time.now - start_time
     puts "Time took for stack deployment: #{pretty_time(took).color(:green)}."
@@ -87,13 +88,13 @@ class CfnStatus
   end
 
   # Only shows new events
-  def show_events(final=false)
+  def show_events(final: false)
     if @last_shown_event_id.nil?
-      i = find_index(:start, final)
+      i = start_index
       print_events(i)
     else
-      i = find_index(:last_shown, final)
-      # puts "last_shown index #{i}"
+      i = last_shown_index
+      puts "last_shown index #{i}"
       print_events(i-1) unless i == 0
     end
 
@@ -103,11 +104,22 @@ class CfnStatus
   end
 
   def print_events(i)
+    # print_events = @events[0..i].reverse
+    # # limit output for debugging
+    # print_events[0..2].each do |e|
+    #   print_event(e)
+    # end
+    # puts "..."
+    # print_events[-3..-1].each do |e|
+    #   print_event(e)
+    # end
+
     @events[0..i].reverse.each do |e|
       print_event(e)
     end
+
     @last_shown_event_id = @events[0]["event_id"]
-    # puts "@last_shown_event_id #{@last_shown_event_id.inspect}"
+    puts "@last_shown_event_id #{@last_shown_event_id.inspect}"
   end
 
   def print_event(e)
@@ -127,10 +139,48 @@ class CfnStatus
     Time.parse(timestamp.to_s).localtime.strftime("%I:%M:%S%p")
   end
 
-  # refreshes the loaded events in memory
+  # Refreshes the @events in memory.
+  #
+  # refresh_events uses next_token to load all events until
+  #
+  # 1. @last_shown_event_id found - if @last_shown_event_id is set
+  # 2. User Initiated Event found - fallback when @last_shown_event_id is not set
   def refresh_events
     resp = cfn.describe_stack_events(stack_name: @stack_name)
+    puts "resp.next_token? #{!resp.next_token.nil?}".color(:yellow) # do something with next_token...
     @events = resp["stack_events"]
+
+    if @last_shown_index
+      # loops paginates through describe_stack_events until last_shown_index is found
+      found_last_shown_index = !!last_show_index
+      until found_last_shown_index
+        unless resp.next_token
+          puts "ERROR: no resp.next_token? #{resp.next_token.inspect}"
+          exit 1
+        end
+
+        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp.next_token)
+        @events += resp["stack_events"]
+        found_last_shown_index = !!last_show_index
+      end
+    else
+      # loops paginates through describe_stack_events until "User Initiated" is found
+      found_user_initiated = !!start_index
+      until found_user_initiated
+        unless resp.next_token
+          puts "ERROR: no resp.next_token? #{resp.next_token.inspect}"
+          exit 1
+        end
+
+        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp.next_token)
+        @events += resp["stack_events"]
+        found_user_initiated = !!start_index
+      end
+    end
+
+    path = "tmp/stack_events.json"
+    IO.write(path, JSON.pretty_generate(@events.map(&:to_h)))
+    puts "refresh_events: written to #{path}"
   rescue Aws::CloudFormation::Errors::ValidationError => e
     if e.message =~ /Stack .* does not exis/
       @stack_deletion_completed = true
@@ -139,21 +189,15 @@ class CfnStatus
     end
   end
 
-  def find_index(name, final=false)
-    send("#{name}_index", final)
-  end
-
-  def start_index(final=false)
-    index = @events.find_index do |event|
+  # Should always find a "User Initiated" stack event when @last_shown_index is not set
+  def start_index
+    @events.find_index do |event|
       event["resource_type"] == "AWS::CloudFormation::Stack" &&
       event["resource_status_reason"] == "User Initiated"
     end
-    # Instead of paginating until until we find the first "User Initiated" "AWS::CloudFormation::Stack" event
-    # we'll use the max.
-    index ? index : @events.size - 1
   end
 
-  def last_shown_index(_)
+  def last_shown_index
     @events.find_index do |event|
       event["event_id"] == @last_shown_event_id
     end
