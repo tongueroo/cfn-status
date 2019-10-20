@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "cfn/status"
+require "cfn_status"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
