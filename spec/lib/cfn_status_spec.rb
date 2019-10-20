@@ -25,7 +25,7 @@ RSpec.describe CfnStatus do
       # uncomment to view and debug
       # status.show_events
       # puts "****"
-      # status.show_events # show not show anything
+      # status.show_events # should not show anything
     end
 
     it "lists events since last shown event" do
@@ -76,6 +76,10 @@ RSpec.describe CfnStatus do
       # uncomment to view and debug
       # status.show_events
     end
+  end
+
+  context "huge template with large number of stack_events" do
+
   end
 end
 
