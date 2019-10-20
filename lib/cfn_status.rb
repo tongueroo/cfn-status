@@ -149,16 +149,11 @@ class CfnStatus
     resp = cfn.describe_stack_events(stack_name: @stack_name)
     @events = resp["stack_events"]
 
-    page = 1
-    write_resp(resp, page)
-
     if @last_shown_index
       # loops paginates through describe_stack_events until last_shown_index is found
       found_last_shown_index = !!last_show_index
       until found_last_shown_index
         resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
-        page += 1
-        write_resp(resp, page)
         @events += resp["stack_events"]
         found_last_shown_index = !!last_show_index
       end
@@ -167,8 +162,6 @@ class CfnStatus
       found_user_initiated = !!start_index
       until found_user_initiated
         resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
-        page += 1
-        write_resp(resp, page)
         @events += resp["stack_events"]
         found_user_initiated = !!start_index
       end
@@ -180,12 +173,6 @@ class CfnStatus
     else
       raise
     end
-  end
-
-  def write_resp(resp, page)
-    path = "tmp/describe_stack_events-#{page}.json"
-    IO.write(path, JSON.pretty_generate(resp.to_h))
-    puts "refresh_events: written to #{path}"
   end
 
   # Should always find a "User Initiated" stack event when @last_shown_index is not set
