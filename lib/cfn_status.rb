@@ -131,30 +131,19 @@ class CfnStatus
 
   # Refreshes the @events in memory.
   #
-  # refresh_events uses next_token to load all events until
-  #
-  # 1. @last_shown_event_id found - if @last_shown_event_id is set
-  # 2. User Initiated Event found - fallback when @last_shown_event_id is not set
   def refresh_events
     resp = cfn.describe_stack_events(stack_name: @stack_name)
     @events = resp["stack_events"]
 
+    # refresh_events uses add_events_pages and resp["next_token"] to load all events until:
+    #
+    #     1. @last_shown_event_id found - if @last_shown_event_id is set
+    #     2. User Initiated Event found - fallback when @last_shown_event_id is not set
+    #
     if @last_shown_event_id
-      # loops paginates through describe_stack_events until last_shown_index is found
-      found_last_shown_index = !!last_shown_index
-      until found_last_shown_index
-        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
-        @events += resp["stack_events"]
-        found_last_shown_index = !!last_shown_index
-      end
+      add_events_pages(resp, :last_shown_index)
     else
-      # loops paginates through describe_stack_events until "User Initiated" is found
-      found_user_initiated = !!start_index
-      until found_user_initiated
-        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
-        @events += resp["stack_events"]
-        found_user_initiated = !!start_index
-      end
+      add_events_pages(resp, :start_index)
     end
 
   rescue Aws::CloudFormation::Errors::ValidationError => e
@@ -162,6 +151,26 @@ class CfnStatus
       @stack_deletion_completed = true
     else
       raise
+    end
+  end
+
+  # Examples:
+  #
+  #     add_events_pages(:start_index)
+  #     add_events_pages(:last_shown_index)
+  #
+  # if index_method is start_index
+  #   loops add_events_pagess through describe_stack_events until "User Initiated" is found
+  #
+  # if index_method is last_shown_index
+  #   loops add_events_pagess through describe_stack_events until last_shown_index is found
+  #
+  def add_events_pages(resp, index_method)
+    found = !!send(index_method)
+    until found
+      resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
+      @events += resp["stack_events"]
+      found = !!send(index_method)
     end
   end
 
