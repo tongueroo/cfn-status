@@ -147,19 +147,18 @@ class CfnStatus
   # 2. User Initiated Event found - fallback when @last_shown_event_id is not set
   def refresh_events
     resp = cfn.describe_stack_events(stack_name: @stack_name)
-    puts "resp.next_token? #{!resp.next_token.nil?}".color(:yellow) # do something with next_token...
     @events = resp["stack_events"]
 
     if @last_shown_index
       # loops paginates through describe_stack_events until last_shown_index is found
       found_last_shown_index = !!last_show_index
       until found_last_shown_index
-        unless resp.next_token
-          puts "ERROR: no resp.next_token? #{resp.next_token.inspect}"
+        unless resp["next_token"]
+          puts "ERROR: no resp['next_token']? #{resp["next_token"].inspect}"
           exit 1
         end
 
-        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp.next_token)
+        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
         @events += resp["stack_events"]
         found_last_shown_index = !!last_show_index
       end
@@ -167,20 +166,16 @@ class CfnStatus
       # loops paginates through describe_stack_events until "User Initiated" is found
       found_user_initiated = !!start_index
       until found_user_initiated
-        unless resp.next_token
-          puts "ERROR: no resp.next_token? #{resp.next_token.inspect}"
+        unless resp["next_token"]
+          puts "ERROR: no resp['next_token']? #{resp["next_token"].inspect}"
           exit 1
         end
 
-        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp.next_token)
+        resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
         @events += resp["stack_events"]
         found_user_initiated = !!start_index
       end
     end
-
-    path = "tmp/stack_events.json"
-    IO.write(path, JSON.pretty_generate(@events.map(&:to_h)))
-    puts "refresh_events: written to #{path}"
   rescue Aws::CloudFormation::Errors::ValidationError => e
     if e.message =~ /Stack .* does not exis/
       @stack_deletion_completed = true

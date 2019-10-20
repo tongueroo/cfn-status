@@ -20,7 +20,7 @@ RSpec.describe CfnStatus do
     let(:stack_events) { JSON.load(IO.read("spec/fixtures/cfn/stack-events-in-progress.json")) }
     it "lists events since user initiated event" do
       status.refresh_events
-      i = status.find_index(:start)
+      i = status.start_index
       expect(i).to eq 15
       # uncomment to view and debug
       # status.show_events
@@ -31,7 +31,7 @@ RSpec.describe CfnStatus do
     it "lists events since last shown event" do
       # first display
       status.refresh_events
-      i = status.find_index(:start)
+      i = status.start_index
       expect(i).to eq 15
 
       # move the last event back in time 4 events, so should print 3 events
@@ -55,7 +55,7 @@ RSpec.describe CfnStatus do
     let(:stack_events) { JSON.load(IO.read("spec/fixtures/cfn/stack-events-complete.json")) }
     it "lists events all the way to completion" do
       status.refresh_events
-      i = status.find_index(:start)
+      i = status.start_index
       expect(i).to eq 17
       # uncomment to view and debug
       # status.show_events
@@ -71,7 +71,7 @@ RSpec.describe CfnStatus do
       expect(status.update_rollback?).to be true
       expect(status.rollback_error_message).to include("STATIC_NAME")
 
-      # i = status.find_index(:start)
+      # i = status.start_index
       # expect(i).to eq 17
       # uncomment to view and debug
       # status.show_events
