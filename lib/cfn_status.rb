@@ -94,7 +94,7 @@ class CfnStatus
       print_events(i)
     else
       i = last_shown_index
-      puts "last_shown index #{i}"
+      # puts "last_shown index #{i}"
       print_events(i-1) unless i == 0
     end
 
@@ -104,22 +104,12 @@ class CfnStatus
   end
 
   def print_events(i)
-    # print_events = @events[0..i].reverse
-    # # limit output for debugging
-    # print_events[0..2].each do |e|
-    #   print_event(e)
-    # end
-    # puts "..."
-    # print_events[-3..-1].each do |e|
-    #   print_event(e)
-    # end
-
     @events[0..i].reverse.each do |e|
       print_event(e)
     end
 
     @last_shown_event_id = @events[0]["event_id"]
-    puts "@last_shown_event_id #{@last_shown_event_id.inspect}"
+    # puts "@last_shown_event_id #{@last_shown_event_id.inspect}"
   end
 
   def print_event(e)
@@ -149,13 +139,13 @@ class CfnStatus
     resp = cfn.describe_stack_events(stack_name: @stack_name)
     @events = resp["stack_events"]
 
-    if @last_shown_index
+    if @last_shown_event_id
       # loops paginates through describe_stack_events until last_shown_index is found
-      found_last_shown_index = !!last_show_index
+      found_last_shown_index = !!last_shown_index
       until found_last_shown_index
         resp = cfn.describe_stack_events(stack_name: @stack_name, next_token: resp["next_token"])
         @events += resp["stack_events"]
-        found_last_shown_index = !!last_show_index
+        found_last_shown_index = !!last_shown_index
       end
     else
       # loops paginates through describe_stack_events until "User Initiated" is found
