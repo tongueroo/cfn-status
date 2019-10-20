@@ -1,6 +1,6 @@
 require "aws-sdk-cloudformation"
 
-module Cfn
+class CfnStatus
   module AwsService
     def cfn
       @cfn ||= Aws::CloudFormation::Client.new

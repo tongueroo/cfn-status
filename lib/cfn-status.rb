@@ -1,1 +1,1 @@
-require "cfn/status"
+require "cfn_status"

@@ -1,11 +1,11 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "cfn/status/version"
+require "cfn_status/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "cfn-status"
-  spec.version       = Cfn::Status::VERSION
+  spec.version       = CfnStatus::VERSION
   spec.authors       = ["Tung Nguyen"]
   spec.email         = ["tongueroo@gmail.com"]
 

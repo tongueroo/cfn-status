@@ -13,13 +13,13 @@ Add this line to your gem's gemspec:
 Require it to your library:
 
 ```ruby
-require "cfn/status"
+require "cfn_status"
 ```
 
 Use like so:
 
 ```ruby
-status = Cfn::Status.new(stack_name)
+status = CfnStatus.new(stack_name)
 status.run # prints out stack events
 ```
 

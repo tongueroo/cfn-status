@@ -1,10 +1,10 @@
-RSpec.describe Cfn::Status do
+RSpec.describe CfnStatus do
   it "has a version number" do
-    expect(Cfn::Status::VERSION).not_to be nil
+    expect(CfnStatus::VERSION).not_to be nil
   end
 
   let(:status) do
-    status = Cfn::Status.new("test-stack")
+    status = CfnStatus.new("test-stack")
     allow(status).to receive(:cfn).and_return(cfn)
     status
   end
