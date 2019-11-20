@@ -1,5 +1,7 @@
 # Cfn Status
 
+[![BoltOps Badge](https://img.boltops.com/boltops/badges/boltops-badge.png)](https://www.boltops.com)
+
 Helper library provides status of CloudFormation stack.
 
 ## Usage
