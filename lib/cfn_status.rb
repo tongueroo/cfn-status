@@ -84,7 +84,7 @@ class CfnStatus
   end
 
   def last_event_status
-    @events[0]["resource_status"]
+    @events.dig(0, "resource_status")
   end
 
   # Only shows new events
