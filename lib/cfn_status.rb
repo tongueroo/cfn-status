@@ -10,6 +10,7 @@ class CfnStatus
   def initialize(stack_name, options={})
     @stack_name = stack_name
     @options = options
+    @cfn = options[:cfn] # allow use of different cfn client. can be useful multiple cfn clients and with different regions
     reset
   end
 
