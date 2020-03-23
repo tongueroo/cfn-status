@@ -243,4 +243,8 @@ class CfnStatus
       "#{minutes.to_i}m #{seconds.to_i}s"
     end
   end
+
+  def handle_rollback!
+    CfnStatus::RollbackStack.handle!(@stack_name, cfn: cfn)
+  end
 end
