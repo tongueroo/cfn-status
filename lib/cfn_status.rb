@@ -1,4 +1,5 @@
 require "cfn_status/version"
+require "cfn_status/rollback_stack"
 
 class CfnStatus
   class Error < StandardError; end
