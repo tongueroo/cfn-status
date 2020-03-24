@@ -21,11 +21,8 @@ class CfnStatus
       return true
     end
 
-    resp = cfn.describe_stacks(stack_name: @stack_name)
-    stack = resp.stacks.first
-
     puts "The current status for the stack #{@stack_name.color(:green)} is #{stack.stack_status.color(:green)}"
-    if stack.stack_status =~ /_IN_PROGRESS$/
+    if in_progress?
       puts "Stack events (tailing):"
       # tail all events until done
       @hide_time_took = true
@@ -39,6 +36,13 @@ class CfnStatus
     success?
   end
 
+  def in_progress?
+    resp = cfn.describe_stacks(stack_name: @stack_name)
+    stack = resp.stacks.first
+    in_progress = stack.stack_status =~ /_IN_PROGRESS$/
+    !!in_progress
+  end
+
   def reset
     @events = [] # constantly replaced with recent events
     @last_shown_event_id = nil
@@ -47,6 +51,10 @@ class CfnStatus
 
   # check for /(_COMPLETE|_FAILED)$/ status
   def wait
+    # Check for in progress again in case .wait is called from other libraries like s3-antivirus
+    # Showing the event messages when will show old messages which can be confusing.
+    return unless in_progress?
+
     puts "Waiting for stack to complete"
     start_time = Time.now
 
