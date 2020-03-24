@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project *loosely* adheres to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.4.2]
+- #3 improve messaging when wait called directly. dont show old events.
+
 ## [0.4.1]
 - fix require cfn_status/rollback_stack
 
