@@ -7,11 +7,13 @@ class CfnStatus
   autoload :AwsService, "cfn_status/aws_service"
   include AwsService
 
-  attr_reader :events
+  attr_reader :events, :stack
   def initialize(stack_name, options={})
     @stack_name = stack_name
     @options = options
     @cfn = options[:cfn] # allow use of different cfn client. can be useful multiple cfn clients and with different regions
+    resp = cfn.describe_stacks(stack_name: @stack_name)
+    @stack = resp.stacks.first
     reset
   end
 
@@ -37,8 +39,6 @@ class CfnStatus
   end
 
   def in_progress?
-    resp = cfn.describe_stacks(stack_name: @stack_name)
-    stack = resp.stacks.first
     in_progress = stack.stack_status =~ /_IN_PROGRESS$/
     !!in_progress
   end
