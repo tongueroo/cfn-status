@@ -83,7 +83,7 @@ class CfnStatus
 
     return if @hide_time_took # set in run
     took = Time.now - start_time
-    puts "Time took for stack deployment: #{pretty_time(took).color(:green)}."
+    puts "Time took: #{pretty_time(took).color(:green)}."
     success?
   end
 
