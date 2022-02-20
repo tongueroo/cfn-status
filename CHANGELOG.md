@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project *loosely* adheres to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.4.5] - 2022-02-20
+- [#5](https://github.com/tongueroo/cfn-status/pull/5) cfn-status retry options
+
 ## [0.4.4] - 2022-02-14
 - more generic time took message
 
