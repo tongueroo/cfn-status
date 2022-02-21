@@ -66,6 +66,7 @@ class CfnStatus
 
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
+      show_took(start_time)
       return
     end
 
@@ -82,9 +83,13 @@ class CfnStatus
     end
 
     return if @hide_time_took # set in run
-    took = Time.now - start_time
-    puts "Time took: #{pretty_time(took).color(:green)}."
+    show_took(start_time)
     success?
+  end
+
+  def show_took(start_time)
+    took = Time.now - start_time
+    puts "Time took: #{pretty_time(took).color(:green)}"
   end
 
   def completed
