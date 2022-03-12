@@ -75,7 +75,7 @@ class CfnStatus
 
     if last_event_status =~ /_FAILED/
       puts "Stack failed: #{last_event_status}".color(:red)
-      puts "Stack reason #{@events[0]["resource_status_reason"]}".color(:red)
+      puts "Stack reason #{@events.dig(0,"resource_status_reason")}".color(:red)
     elsif last_event_status =~ /_ROLLBACK_/
       puts "Stack rolled back: #{last_event_status}".color(:red)
     else # success
@@ -94,8 +94,8 @@ class CfnStatus
 
   def completed
     last_event_status =~ /(_COMPLETE|_FAILED)$/ &&
-    @events[0]["logical_resource_id"] == @stack_name &&
-    @events[0]["resource_type"] == "AWS::CloudFormation::Stack"
+    @events.dig(0,"logical_resource_id") == @stack_name &&
+    @events.dig(0,"resource_type") == "AWS::CloudFormation::Stack"
   end
 
   def last_event_status
@@ -123,7 +123,7 @@ class CfnStatus
       print_event(e)
     end
 
-    @last_shown_event_id = @events[0]["event_id"]
+    @last_shown_event_id = @events.dig(0, "event_id")
     # puts "@last_shown_event_id #{@last_shown_event_id.inspect}"
   end
 
@@ -204,12 +204,12 @@ class CfnStatus
   end
 
   def success?
-    resource_status = @events[0]["resource_status"]
+    resource_status = @events.dig(0,"resource_status")
     %w[CREATE_COMPLETE UPDATE_COMPLETE].include?(resource_status)
   end
 
   def update_rollback?
-    @events[0]["resource_status"] == "UPDATE_ROLLBACK_COMPLETE"
+    @events.dig(0,"resource_status") == "UPDATE_ROLLBACK_COMPLETE"
   end
 
   def find_update_failed_event
