@@ -23,7 +23,7 @@ class CfnStatus
       return true
     end
 
-    puts "The current status for the stack #{@stack_name.color(:green)} is #{stack.stack_status.color(:green)}"
+    puts "Stack #{@stack_name.color(:green)} Status: #{stack.stack_status.color(:green)}"
     if in_progress?
       puts "Stack events (tailing):"
       # tail all events until done
@@ -191,9 +191,14 @@ class CfnStatus
 
   # Should always find a "User Initiated" stack event when @last_shown_index is not set
   def start_index
+    start_index_before_delete = @options[:start_index_before_delete]
+
     @events.find_index do |event|
+      skip = start_index_before_delete && event["resource_status"] == "DELETE_IN_PROGRESS"
+
       event["resource_type"] == "AWS::CloudFormation::Stack" &&
-      event["resource_status_reason"] == "User Initiated"
+      event["resource_status_reason"] == "User Initiated" &&
+      !skip
     end
   end
 
