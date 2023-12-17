@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project *loosely* adheres to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.5.0] - 2023-12-17
+- [#6](https://github.com/tongueroo/cfn-status/pull/6) Use events.dig instead of brackets
+- [#7](https://github.com/tongueroo/cfn-status/pull/7) Add start_index_before_delete option
+- add add_development_dependency nokogiri
+- improve dev dependency version pins
+
 ## [0.4.6] - 2022-02-21
 - show took time for deletion also
 
