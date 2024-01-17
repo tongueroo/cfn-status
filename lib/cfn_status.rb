@@ -57,17 +57,14 @@ class CfnStatus
     # Showing the event messages when will show old messages which can be confusing.
     return success? unless in_progress?
 
-    puts "Waiting for stack to complete TEST1"
+    puts "Waiting for stack to complete"
     start_time = Time.now
 
     refresh_events
     until completed || @stack_deletion_completed
-      puts "hi 1 #{Time.now}"
       show_events(final: false)
     end
-    puts "hi 2 #{Time.now}"
     show_events(final: true) # show the final event
-    puts "hi 3 #{Time.now}"
 
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
