@@ -1,3 +1,5 @@
+$stdout.sync = true unless ENV["CFN_STATUS_STDOUT_SYNC"] == "0"
+
 require "cfn_status/version"
 require "cfn_status/rollback_stack"
 
