@@ -92,7 +92,7 @@ class CfnStatus
   def delay_after_wait
     # Delay helps when running in CodeBuild Labmda Compute Type to allow time for
     # the logs to be sent to CloudWatch
-    puts "Delaying after wait finished."
+    puts "cfn-status delaying 10s after wait finished."
     sleep 10
   end
 
