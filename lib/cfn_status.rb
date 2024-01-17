@@ -53,7 +53,7 @@ class CfnStatus
   def wait
     # Check for in progress again in case .wait is called from other libraries like s3-antivirus
     # Showing the event messages when will show old messages which can be confusing.
-    return unless in_progress?
+    return success? unless in_progress?
 
     puts "Waiting for stack to complete"
     start_time = Time.now
@@ -67,7 +67,7 @@ class CfnStatus
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
       show_took(start_time)
-      return
+      return success?
     end
 
     # Never gets beyond here when deleting a stack because the describe stack returns nothing
@@ -82,7 +82,7 @@ class CfnStatus
       puts "Stack success status: #{last_event_status}".color(:green)
     end
 
-    return if @hide_time_took # set in run
+    return success? if @hide_time_took # set in run
     show_took(start_time)
     success?
   end
@@ -210,7 +210,15 @@ class CfnStatus
 
   def success?
     resource_status = @events.dig(0,"resource_status")
-    %w[CREATE_COMPLETE UPDATE_COMPLETE].include?(resource_status)
+    if resource_status.nil? # not called as a part of wait
+      resp = cfn.describe_stacks(stack_name: @stack_name)
+      status = resp.stacks.first.stack_status
+    else
+      status = resource_status
+    end
+
+    successes = %w[CREATE_COMPLETE UPDATE_COMPLETE]
+    successes.include?(status)
   end
 
   def update_rollback?
