@@ -67,6 +67,7 @@ class CfnStatus
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
       show_took(start_time)
+      delay_after_wait
       return success?
     end
 
@@ -82,9 +83,17 @@ class CfnStatus
       puts "Stack success status: #{last_event_status}".color(:green)
     end
 
+    delay_after_wait
     return success? if @hide_time_took # set in run
     show_took(start_time)
     success?
+  end
+
+  def delay_after_wait
+    # Delay helps when running in CodeBuild Labmda Compute Type to allow time for
+    # the logs to be sent to CloudWatch
+    puts "Delaying after wait finished."
+    sleep 10
   end
 
   def show_took(start_time)
