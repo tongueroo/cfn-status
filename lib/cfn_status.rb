@@ -82,8 +82,7 @@ class CfnStatus
       puts "Stack success status: #{last_event_status}".color(:green)
     end
 
-    return success? if @hide_time_took # set in run
-    show_took(start_time)
+    show_took(start_time) unless @hide_time_took # @hide_time_took set in run
     success?
   end
 
