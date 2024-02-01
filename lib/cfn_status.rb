@@ -59,7 +59,7 @@ class CfnStatus
     start_time = Time.now
 
     refresh_events
-    until completed || @stack_deletion_completed
+    until completed? || @stack_deletion_completed
       show_events(final: false)
     end
     show_events(final: true) # show the final event
@@ -67,7 +67,9 @@ class CfnStatus
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
       show_took(start_time)
-      return success?
+      # Cant use success? because the stack is deleted and the describe stack errors
+      # For deletion, always return true once describe_stack fails to return the stack
+      return true
     end
 
     # Never gets beyond here when deleting a stack because the describe stack returns nothing
@@ -91,7 +93,7 @@ class CfnStatus
     puts "Time took: #{pretty_time(took).color(:green)}"
   end
 
-  def completed
+  def completed?
     last_event_status =~ /(_COMPLETE|_FAILED)$/ &&
     @events.dig(0,"logical_resource_id") == @stack_name &&
     @events.dig(0,"resource_type") == "AWS::CloudFormation::Stack"
