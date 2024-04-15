@@ -8,7 +8,7 @@ class CfnStatus
   include AwsService
 
   attr_reader :events, :stack
-  def initialize(stack_name, options={})
+  def initialize(stack_name, options = {})
     @stack_name = stack_name
     @options = options
     @cfn = options[:cfn] # allow use of different cfn client. can be useful multiple cfn clients and with different regions
@@ -53,13 +53,13 @@ class CfnStatus
   def wait
     # Check for in progress again in case .wait is called from other libraries like s3-antivirus
     # Showing the event messages when will show old messages which can be confusing.
-    return unless in_progress?
+    return success? unless in_progress?
 
     puts "Waiting for stack to complete"
     start_time = Time.now
 
     refresh_events
-    until completed || @stack_deletion_completed
+    until completed? || @stack_deletion_completed
       show_events(final: false)
     end
     show_events(final: true) # show the final event
@@ -67,35 +67,39 @@ class CfnStatus
     if @stack_deletion_completed
       puts "Stack #{@stack_name} deleted."
       show_took(start_time)
-      return
+      # Cant use success? because the stack is deleted and the describe stack errors
+      # For deletion, always return true once describe_stack fails to return the stack
+      return true
     end
 
     # Never gets beyond here when deleting a stack because the describe stack returns nothing
     # once the stack is deleted. Gets here for stack create and update though.
 
-    if last_event_status =~ /_FAILED/
+    if /_FAILED/.match?(last_event_status)
       puts "Stack failed: #{last_event_status}".color(:red)
-      puts "Stack reason #{@events.dig(0,"resource_status_reason")}".color(:red)
-    elsif last_event_status =~ /_ROLLBACK_/
+      puts "Stack reason #{@events.dig(0, "resource_status_reason")}".color(:red)
+    elsif /_ROLLBACK_/.match?(last_event_status)
       puts "Stack rolled back: #{last_event_status}".color(:red)
     else # success
       puts "Stack success status: #{last_event_status}".color(:green)
     end
 
-    return if @hide_time_took # set in run
     show_took(start_time)
     success?
   end
 
   def show_took(start_time)
+    # @hide_time_took set in run
+    return if @hide_time_took
+    return unless @options[:show_took]
     took = Time.now - start_time
     puts "Time took: #{pretty_time(took).color(:green)}"
   end
 
-  def completed
+  def completed?
     last_event_status =~ /(_COMPLETE|_FAILED)$/ &&
-    @events.dig(0,"logical_resource_id") == @stack_name &&
-    @events.dig(0,"resource_type") == "AWS::CloudFormation::Stack"
+      @events.dig(0, "logical_resource_id") == @stack_name &&
+      @events.dig(0, "resource_type") == "AWS::CloudFormation::Stack"
   end
 
   def last_event_status
@@ -110,16 +114,16 @@ class CfnStatus
     else
       i = last_shown_index
       # puts "last_shown index #{i}"
-      print_events(i-1) unless i == 0
+      print_events(i - 1) unless i == 0
     end
 
     return if final
-    sleep 5 unless ENV['TEST']
+    sleep 5 unless ENV["TEST"]
     refresh_events
   end
 
   def print_events(i)
-    @events[0..i].reverse.each do |e|
+    @events[0..i].reverse_each do |e|
       print_event(e)
     end
 
@@ -135,7 +139,7 @@ class CfnStatus
       e["logical_resource_id"],
       e["resource_status_reason"]
     ].join(" ")
-    message = message.color(:red) if e["resource_status"] =~ /_FAILED/
+    message = message.color(:red) if /_FAILED/.match?(e["resource_status"])
     puts message
   end
 
@@ -160,9 +164,8 @@ class CfnStatus
     else
       add_events_pages(resp, :start_index)
     end
-
   rescue Aws::CloudFormation::Errors::ValidationError => e
-    if e.message =~ /Stack .* does not exis/
+    if /Stack .* does not exis/.match?(e.message)
       @stack_deletion_completed = true
     else
       raise
@@ -197,8 +200,8 @@ class CfnStatus
       skip = start_index_before_delete && event["resource_status"] == "DELETE_IN_PROGRESS"
 
       event["resource_type"] == "AWS::CloudFormation::Stack" &&
-      event["resource_status_reason"] == "User Initiated" &&
-      !skip
+        event["resource_status_reason"] == "User Initiated" &&
+        !skip
     end
   end
 
@@ -209,18 +212,26 @@ class CfnStatus
   end
 
   def success?
-    resource_status = @events.dig(0,"resource_status")
-    %w[CREATE_COMPLETE UPDATE_COMPLETE].include?(resource_status)
+    resource_status = @events.dig(0, "resource_status")
+    if resource_status.nil? # not called as a part of wait
+      resp = cfn.describe_stacks(stack_name: @stack_name)
+      status = resp.stacks.first.stack_status
+    else
+      status = resource_status
+    end
+
+    successes = %w[CREATE_COMPLETE UPDATE_COMPLETE]
+    successes.include?(status)
   end
 
   def update_rollback?
-    @events.dig(0,"resource_status") == "UPDATE_ROLLBACK_COMPLETE"
+    @events.dig(0, "resource_status") == "UPDATE_ROLLBACK_COMPLETE"
   end
 
   def find_update_failed_event
     i = @events.find_index do |event|
       event["resource_type"] == "AWS::CloudFormation::Stack" &&
-      event["resource_status_reason"] == "User Initiated"
+        event["resource_status_reason"] == "User Initiated"
     end
 
     @events[0..i].reverse.find do |e|
@@ -236,7 +247,7 @@ class CfnStatus
 
     reason = event["resource_status_reason"]
     messages_map.each do |pattern, message|
-      if reason =~ pattern
+      if reason&.match?(pattern)
         return message
       end
     end
