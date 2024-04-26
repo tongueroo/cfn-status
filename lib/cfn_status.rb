@@ -50,22 +50,22 @@ class CfnStatus
   end
 
   # check for /(_COMPLETE|_FAILED)$/ status
-  def wait
+  def wait(quiet: false)
     # Check for in progress again in case .wait is called from other libraries like s3-antivirus
     # Showing the event messages when will show old messages which can be confusing.
     return success? unless in_progress?
 
-    puts "Waiting for stack to complete"
+    puts "Waiting for stack to complete" unless quiet
     start_time = Time.now
 
     refresh_events
     until completed? || @stack_deletion_completed
-      show_events(final: false)
+      show_events(final: false, quiet: quiet)
     end
-    show_events(final: true) # show the final event
+    show_events(final: true, quiet: quiet) # show the final event
 
     if @stack_deletion_completed
-      puts "Stack #{@stack_name} deleted."
+      puts "Stack #{@stack_name} deleted." unless quiet
       show_took(start_time)
       # Cant use success? because the stack is deleted and the describe stack errors
       # For deletion, always return true once describe_stack fails to return the stack
@@ -81,7 +81,7 @@ class CfnStatus
     elsif /_ROLLBACK_/.match?(last_event_status)
       puts "Stack rolled back: #{last_event_status}".color(:red)
     else # success
-      puts "Stack success status: #{last_event_status}".color(:green)
+      puts "Stack success status: #{last_event_status}" unless quiet
     end
 
     show_took(start_time)
@@ -107,14 +107,14 @@ class CfnStatus
   end
 
   # Only shows new events
-  def show_events(final: false)
+  def show_events(final: false, quiet: false)
     if @last_shown_event_id.nil?
       i = start_index
-      print_events(i)
+      print_events(i) unless quiet
     else
       i = last_shown_index
       # puts "last_shown index #{i}"
-      print_events(i - 1) unless i == 0
+      print_events(i - 1) unless i == 0 || quiet
     end
 
     return if final
