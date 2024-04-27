@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project *loosely* adheres to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.6.1] - 2024-04-27
+- [#9](https://github.com/tongueroo/cfn-status/pull/9) quiet logging
+
 ## [0.6.0] - 2024-04-15
 - [#8](https://github.com/tongueroo/cfn-status/pull/8) Fix success return
 - fix success after delete
